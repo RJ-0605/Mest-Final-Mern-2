@@ -66,52 +66,147 @@ StudentphaseRouter.post('/returnsubjectsdetailsfor-userId' , async (req, res) =>
 	var userId = body["userId"]
 
 	console.log()
+	try {	
+		// first get user id to get the subject codes 
+		let filter = { userId : userId };
 	
-	// first get user id to get the subject codes 
-	var filter = { userId: userId };
-   
 
-	let userSelect_details = await UserSelect.findOne(filter);
-	
-	console.log(userSelect_details); // 'Jean-Luc Picard'
-	
-	console.log("suggested_subject_codes" , 
-	userSelect_details.suggested_subject_codes);
-	console.log("added_subject_codes" ,
-	userSelect_details.added_subject_codes);
-	
-	let suggested_subject_codes = userSelect_details.suggested_subject_codes;
-	
-	
-	// gotten subject codes in the array 
-	// now loop in the array to fetch from the subject model the subject details
-	// this list presents to the database to be displayed
-	
-	let list =[]
-	for ( let x in  suggested_subject_codes) {
-		// first find details in subject 
-		 
-		 console.log(suggested_subject_codes[x])
-		var filter = { subject_code : suggested_subject_codes[x] };
-		// find first for appending 
-		let found_subjectdetails = await Subjects.findOne(filter);
-		console.log(found_subjectdetails)
-		list.push(found_subjectdetails)
-		}
-	
-	 //remove null from list
-	 function removeNull(array) {
-			return array.filter(x => x !== null)
-		};
-	list = removeNull(list)
-	
-	 console.log("this is list of details of a subject for a particular student" 
-	 , list )
+		let userSelect_details = await UserSelect.findOne(filter);
 		
-	res.json({"message":"All Subjects and their  details for  a particular userId" , list  : list })
+		console.log(userSelect_details); // 'Jean-Luc Picard'
+		
+		console.log("suggested_subject_codes" , 
+		userSelect_details.suggested_subject_codes);
+		console.log("added_subject_codes" ,
+		userSelect_details.added_subjects_code);
+		
+		let suggested_subject_codes = userSelect_details.suggested_subject_codes;
+		let added_subjects_code = userSelect_details.added_subjects_code ;
+		
+		// gotten subject codes in the array 
+		// now loop in the array to fetch from the subject model the subject details
+		// this list presents to the database to be displayed
+		
+		let list =[]
+		let display_addlist = []
+		for ( let x in  suggested_subject_codes) {
+			// first find details in subject 
+			
+			console.log(suggested_subject_codes[x])
+			let filter = { subject_code : suggested_subject_codes[x] };
+			// find first for appending 
+			let found_subjectdetails = await Subjects.findOne(filter);
+			console.log(found_subjectdetails)
+			list.push(found_subjectdetails)
+			}
+		
+		//remove null from list
+		function removeNull(array) {
+				return array.filter(x => x !== null)
+			};
+		list = removeNull(list)
+	// send the list of the added for display as well 
+		for (let x in added_subjects_code ) {
+			// first find details in subject 
+
+			
+			let filter = { subject_code: added_subjects_code[x] };
+			// find first for appending 
+			let found_addsubjects = await Subjects.findOne(filter);
+			console.log(found_addsubjects)
+			display_addlist.push(found_addsubjects)
+
+			
+		}
+        display_addlist = removeNull(display_addlist)
+
+		
+		console.log("this is list of details of a subject for a particular student" 
+		, list )
+			
+		res.json({"message":"All Subjects and their  details for  a particular userId" ,
+					suggested_subject_codes: suggested_subject_codes,
+					list  : list ,
+					added_subjects_code: added_subjects_code ,
+					display_addlist: display_addlist
+					
+					})
+	}catch(exception) {
+								
+						msg = exception
+						console.log(msg)
+						
+						res.json({"message":msg
+											
+								  }) 
+	}
 		
 })
 
+
+// update students courses for a particular user id 
+
+StudentphaseRouter.post('/updatesubjectsdetailsfor-userId', async (req, res) => {
+	// update profile details 
+	const body = req.body
+	var userId = body["userId"]
+	var suggested_subject_codes = body["suggested_subject_codes"]
+	var suggested_list = body["list"]
+	var added_subject_code = body["added_subject_codes"]
+	var display_addlist = body["display_addlist"]
+
+
+	try{	// first get user id to get the subject codes 
+		let filter = { userId: userId };
+
+
+
+		// first update User_select Model before we go to the Subject Model 
+
+		const update_userselect = { suggested_subject_codes , added_subject_code };
+
+
+		let user_select = await UserSelect.findOneAndUpdate(filter, update_userselect, { new: true });
+
+		// for loop to update Subject details 
+		// since the details the suggested list is different from 
+		// that of the added list 
+
+		var Subject_suggupdate = ""
+		for (let x in suggested_list) {
+			
+			let temp_suggestlist = suggested_list[x]
+			let filter = { subject_code: temp_suggestlist.subject_codes };
+			let update_subject = { temp_suggestlist }
+			Subject_suggupdate = await Subjects.findOneAndUpdate(filter, update_subject, { new: true })
+			
+		}
+
+		var Subject_addupdate = ""
+		for (let  y in display_addlist) {
+			let temp_addlist = display_addlist[x]
+			let filter = { subject_code: temp_addlist.subject_codes };
+			let update_subject = { temp_addlist }
+			Subject_addupdate = await Subjects.findOneAndUpdate(filter, update_subject, { new: true })
+		}
+
+
+
+		res.json({
+			"message": "All Subjects and their  details for  a particular userId",
+			Subject_addupdate : Subject_addupdate,
+			Subject_suggupdate : Subject_suggupdate
+		})
+	}catch(exception) {
+								
+						msg = exception
+						console.log(msg)
+						
+						res.json({"message":msg
+											
+								  })
+	}							  
+})
 
 // how will the front end process it what will 
 // it send back as update on the subjects in general 

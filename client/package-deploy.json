@@ -40,5 +40,5 @@
   "devDependencies": {
     "json-loader": "^0.5.7"
   } ,
-  "proxy": "http://localhost:5000"
+  "proxy": "https://mest-final-project-mern.herokuapp.com/"
 }

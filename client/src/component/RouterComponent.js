@@ -38,7 +38,7 @@ export default function RouterComponent() {
 		      setIsLoggedIn = {setIsLoggedIn}      		
       	      />
       	    </Route>
-    //  	<Route exact path="/teach-dashboard" component={TeachDashboard} />
+      	<Route exact path="/teach-dashboard" component={TeachDashboard} />
         
        <Route exact path="/newpost" >       
         <Newpost 
